@@ -83,7 +83,19 @@ app.post('/conversa', async (req, res) => {
 
   // Realizar operaciones con los datos y enviar una respuesta
   res.json({ mensaje: 'Datos recibidos correctamente', datos });
+  // Ejecutar comando en la terminal (ejemplo: ls -l)
 
+  exec('', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error al ejecutar el comando: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Error en la salida estándar: ${stderr}`);
+      return;
+    }
+    console.log(`Salida estándar del comando: ${stdout}`);
+  });
 });
 
 
