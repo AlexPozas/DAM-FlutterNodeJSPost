@@ -1,7 +1,7 @@
 const express = require('express')
 const multer = require('multer');
 const url = require('url')
-
+const bodyParser = require('body-parser');
 const app = express()
 const port = process.env.PORT || 3000
 
@@ -73,6 +73,20 @@ async function getLlistat(req, res) {
     res.status(400).json({ result: "Paràmetres incorrectes" })
   }
 }
+
+
+
+
+app.post('/conversa', async (req, res) => {
+  // Obtener datos del cuerpo de la solicitud
+  const datos = req.body;
+
+  // Realizar operaciones con los datos y enviar una respuesta
+  res.json({ mensaje: 'Datos recibidos correctamente', datos });
+
+});
+
+
 
 // Configurar direcció tipus 'POST' amb la URL ‘/data'
 // Enlloc de fer una crida des d'un navegador, fer servir 'curl'
