@@ -84,18 +84,27 @@ class _ChatGPTInterfaceState extends State<ChatGPTInterface> {
 
   void _handleSubmitted(String text) async {
     _textController.clear();
-    ChatMessage message = ChatMessage(
+    ChatMessage message2 = ChatMessage(
       text: text,
       isMe: true,
       isImage: false,
     );
     setState(() {
-      _messages.insert(0, message);
+      _messages.insert(0, message2);
     });
     AppData appData = Provider.of<AppData>(context, listen: false);
 
     try {
       String result = await appData.readMessage(text);
+
+      ChatMessage message = ChatMessage(
+        text: result, //dataPost
+        isMe: false,
+        isImage: false,
+      );
+      setState(() {
+        _messages.insert(0, message);
+      });
       // Muestra el resultado en la interfaz de usuario
       // Puedes manejar cómo mostrar el resultado según tus necesidades específicas
       print('Resultado: $result');
