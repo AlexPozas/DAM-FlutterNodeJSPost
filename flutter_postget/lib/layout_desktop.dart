@@ -84,18 +84,20 @@ class _ChatGPTInterfaceState extends State<ChatGPTInterface> {
 
   void _handleSubmitted(String text) async {
     _textController.clear();
-    ChatMessage message = ChatMessage(
-      text: text,
-      isMe: true,
-      isImage: false,
-    );
-    setState(() {
-      _messages.insert(0, message);
-    });
+
     AppData appData = Provider.of<AppData>(context, listen: false);
 
     try {
       String result = await appData.readMessage(text);
+
+      ChatMessage message = ChatMessage(
+        text: result,
+        isMe: true,
+        isImage: false,
+      );
+      setState(() {
+        _messages.insert(0, message);
+      });
       // Muestra el resultado en la interfaz de usuario (puedes usar un widget como un AlertDialog o SnackBar)
       // Ejemplo:
     } catch (e) {
