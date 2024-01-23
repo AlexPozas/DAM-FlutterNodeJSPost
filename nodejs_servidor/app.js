@@ -1,6 +1,7 @@
 const express = require('express')
 const multer = require('multer');
 const url = require('url')
+const http = require('http');
 const bodyParser = require('body-parser');
 const app = express()
 const port = process.env.PORT || 3000
@@ -106,13 +107,14 @@ app.post('/conversa', async (req, res) => {
 app.post('/data', upload.single('file'), async (req, res) => {
   // Processar les dades del formulari i l'arxiu adjunt
   const textPost = req.body;
+  console.log(textPost);
   const uploadedFile = req.file;
   let objPost = {}
 
   try {
-    objPost = JSON.parse(textPost.data)
+    objPost = JSON.parse(textPost.data);
   } catch (error) {
-    res.status(400).send('Sol·licitud incorrecta.')
+    res.status(400).send('Sol·licitud incorrecta.\n')
     console.log(error)
     return
   }
@@ -123,7 +125,7 @@ app.post('/data', upload.single('file'), async (req, res) => {
 
   // A l'exercici 'XatIETI' hi hauràn dos tipus de petició:
   // - 'conversa' que retornara una petició generada per 'mistral'
-  // - 'imatge' que retornara la interpretació d'una imatge enviada a 'llava'
+  // - 'imatge' que retornara una imatge generada per 'llava'
 
   if (objPost.type === 'test') {
     if (uploadedFile) {
@@ -137,7 +139,111 @@ app.post('/data', upload.single('file'), async (req, res) => {
     res.write("POST Second line\n")
     await new Promise(resolve => setTimeout(resolve, 1000))
     res.end("POST Last line\n")
-  } else {
+  }
+
+
+  else if (objPost.type === 'conversa') {
+    callMistralApi(objPost.prompt, (chunk) => {
+      if (chunk) {
+        let resp = JSON.parse(chunk)
+        res.write(resp.response);
+        if (resp.done || stop) {
+          stop = false;
+          res.end();
+        }
+      }
+    });
+  }
+  else if (objPost.type === 'imatge') {
+    let prompt = objPost.prompt == "" ? "What is in this picture?" : objPost.prompt
+    callLlavaApi(prompt, objPost.image, (chunk) => {
+      if (chunk) {
+        let resp = JSON.parse(chunk)
+
+        if (resp.done || stop) {
+          stop = false;
+          res.end();
+        } else {
+          res.write(resp.response);
+        }
+      }
+    });
+  }
+  else if (objPost.type === 'stop') {
+    stop = true;
+    res.end();
+  }
+  else {
     res.status(400).send('Sol·licitud incorrecta.')
   }
-})
+
+  function callMistralApi(prompt, onDataCallback) {
+    const data = JSON.stringify({
+      model: 'mistral',
+      prompt: prompt
+    });
+
+    const options = {
+      hostname: 'localhost',
+      port: 11434,
+      path: '/api/generate',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      }
+    };
+
+    const req = http.request(options, res => {
+      res.on('data', chunk => {
+        // Llamar al callback con cada fragmento de datos recibido
+        onDataCallback(chunk);
+      });
+    });
+
+    req.on('error', error => {
+      console.error('Error al llamar a la API de Mistral:', error);
+      // Manejar el error adecuadamente, tal vez con otro callback
+    });
+
+    req.write(data);
+    req.end();
+  }
+
+  function callLlavaApi(prompt, image, onDataCallback) {
+    const data = JSON.stringify({
+      model: 'llava',
+      prompt: prompt,
+      images: [image]
+    });
+
+    const options = {
+      hostname: 'localhost',
+      port: 11434,
+      path: '/api/generate',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      }
+    };
+
+    const req = http.request(options, res => {
+      res.on('data', chunk => {
+        // Llamar al callback con cada fragmento de datos recibido
+        onDataCallback(chunk);
+      });
+    });
+
+    req.on('error', error => {
+      console.error('Error al llamar a la API de Llava:', error);
+      // Manejar el error adecuadamente, tal vez con otro callback
+    });
+
+    req.write(data);
+    req.end();
+  }
+}
+
+
+)

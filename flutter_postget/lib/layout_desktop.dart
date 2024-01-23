@@ -1,15 +1,12 @@
 import 'dart:convert';
+import 'package:flutter_postget/app_data.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
-void main() {
-  runApp(MaterialApp(
-    home: ChatGPTInterface(title: "ChatGPT"),
-  ));
-}
+import 'package:provider/provider.dart';
 
 class ChatGPTInterface extends StatefulWidget {
   const ChatGPTInterface({super.key, required this.title});
@@ -17,7 +14,7 @@ class ChatGPTInterface extends StatefulWidget {
   final String title;
 
   @override
-  State<ChatGPTInterface> createState() => _ChatGPTInterfaceState();
+  _ChatGPTInterfaceState createState() => _ChatGPTInterfaceState();
 }
 
 class _ChatGPTInterfaceState extends State<ChatGPTInterface> {
@@ -95,24 +92,10 @@ class _ChatGPTInterfaceState extends State<ChatGPTInterface> {
     setState(() {
       _messages.insert(0, message);
     });
+    AppData appData = Provider.of<AppData>(context, listen: false);
 
+    appData.readMessage(text);
     // Realizar la solicitud POST al servidor
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/conversa'), // Cambia a tu URL correcta
-        body: jsonEncode({'missatge': text}),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        print('Resposta del servidor: ${response.body}');
-        // Puedes procesar la respuesta del servidor si es necesario
-      } else {
-        print('Error en la sol·licitud: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error: $e');
-    }
   }
 
   Future<void> _handleImagePick() async {
