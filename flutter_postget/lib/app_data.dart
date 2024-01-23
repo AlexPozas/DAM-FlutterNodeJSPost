@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_postget/layout_desktop.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
@@ -15,7 +16,7 @@ class AppData with ChangeNotifier {
   bool loadingGet = false;
   bool loadingPost = false;
   bool loadingFile = false;
-
+  List<ChatMessage> _messages = <ChatMessage>[];
   dynamic dataGet;
   dynamic dataPost;
   dynamic dataFile;
@@ -55,7 +56,7 @@ class AppData with ChangeNotifier {
 
   // Funció per fer crides tipus 'POST' amb un arxiu adjunt,
   // i agafar la informació a mida que es va rebent
-  Future<void> loadHttpPostByChunks(
+  Future<String> loadHttpPostByChunks(
       String url, String text, String image) async {
     var completer = Completer<void>();
     var request = http.MultipartRequest('POST', Uri.parse(url));
@@ -65,48 +66,28 @@ class AppData with ChangeNotifier {
       request.fields['data'] = '{"type":"stop"}';
       loadingPost = false;
     } else if (image == "") {
-      loadingPost = true;
       request.fields['data'] = '{"type":"conversa", "prompt": "$text"}';
     } else {
-      loadingPost = true;
       request.fields['data'] =
           '{"type":"imatge", "prompt": "$text", "image": "$image"}';
     }
 
     try {
       var response = await request.send();
-      print("inicio try");
-
-      if (loadingPost) dataPost = "";
+      String dataPost = "";
 
       // Listen to each chunk of data
-      response.stream.transform(utf8.decoder).listen(
-        (data) {
-          print(loadingPost);
-          if (loadingPost) {
-            print(dataPost);
-            // Update dataPost with the latest data
-            dataPost += data;
-            print("Despues data");
-            print(dataPost);
-            notifyListeners();
-          }
-        },
-        onDone: () {
-          print("onDone");
-          loadingPost = false;
-          completer.complete();
-        },
-        onError: (error) {
-          completer.completeError(
-              "Error del servidor (appData/loadHttpPostByChunks): $error");
-        },
-      );
+      await for (String data in response.stream.transform(utf8.decoder)) {
+        dataPost += data;
+        notifyListeners();
+      }
+
+      return dataPost; // Retorna los datos al completar la solicitud
     } catch (e) {
       completer.completeError("Excepció (appData/loadHttpPostByChunks): $e");
     }
 
-    return completer.future;
+    return ""; // En caso de error, retorna una cadena vacía
   }
 
   // Funció per fer carregar dades d'un arxiu json de la carpeta 'assets'
@@ -156,13 +137,14 @@ class AppData with ChangeNotifier {
     }
   }
 
-  void readMessage(String text) async {
+  Future<String> readMessage(String text) async {
     try {
       String url = 'http://localhost:3000/data';
       String image = '';
-      print(loadHttpPostByChunks(url, text, image));
+      return await loadHttpPostByChunks(url, text, image);
     } catch (e) {
       print('Error: $e');
+      throw e; // Puedes manejar el error según tus necesidades
     }
   }
 }

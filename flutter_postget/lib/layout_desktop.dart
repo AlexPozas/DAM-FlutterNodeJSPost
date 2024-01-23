@@ -94,8 +94,13 @@ class _ChatGPTInterfaceState extends State<ChatGPTInterface> {
     });
     AppData appData = Provider.of<AppData>(context, listen: false);
 
-    appData.readMessage(text);
-    // Realizar la solicitud POST al servidor
+    try {
+      String result = await appData.readMessage(text);
+      // Muestra el resultado en la interfaz de usuario (puedes usar un widget como un AlertDialog o SnackBar)
+      // Ejemplo:
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   Future<void> _handleImagePick() async {
