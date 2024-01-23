@@ -58,7 +58,7 @@ class AppData with ChangeNotifier {
   // i agafar la informació a mida que es va rebent
   Future<String> loadHttpPostByChunks(
       String url, String text, String image) async {
-    var completer = Completer<void>();
+    var completer = Completer<String>();
     var request = http.MultipartRequest('POST', Uri.parse(url));
 
     // Agregar datos JSON como parte del formulario
@@ -79,15 +79,21 @@ class AppData with ChangeNotifier {
       // Listen to each chunk of data
       await for (String data in response.stream.transform(utf8.decoder)) {
         dataPost += data;
-        notifyListeners();
+
+        if (loadingPost) {
+          notifyListeners(); // Notifica a los escuchadores cada vez que se actualiza dataPost
+        }
       }
 
-      return dataPost; // Retorna los datos al completar la solicitud
+      loadingPost = false;
+      completer
+          .complete(dataPost); // Retorna los datos al completar la solicitud
     } catch (e) {
+      loadingPost = false;
       completer.completeError("Excepció (appData/loadHttpPostByChunks): $e");
     }
 
-    return ""; // En caso de error, retorna una cadena vacía
+    return completer.future;
   }
 
   // Funció per fer carregar dades d'un arxiu json de la carpeta 'assets'
@@ -141,7 +147,7 @@ class AppData with ChangeNotifier {
     try {
       String url = 'http://localhost:3000/data';
       String image = '';
-      return await loadHttpPostByChunks(url, text, image);
+      return loadHttpPostByChunks(url, text, image);
     } catch (e) {
       print('Error: $e');
       throw e; // Puedes manejar el error según tus necesidades
