@@ -110,6 +110,7 @@ app.post('/data', upload.single('file'), async (req, res) => {
   console.log(textPost);
   const uploadedFile = req.file;
   let objPost = {}
+  var stop = false;
 
   try {
     objPost = JSON.parse(textPost.data);

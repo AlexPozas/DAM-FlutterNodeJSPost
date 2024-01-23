@@ -65,8 +65,10 @@ class AppData with ChangeNotifier {
       request.fields['data'] = '{"type":"stop"}';
       loadingPost = false;
     } else if (image == "") {
+      loadingPost = true;
       request.fields['data'] = '{"type":"conversa", "prompt": "$text"}';
     } else {
+      loadingPost = true;
       request.fields['data'] =
           '{"type":"imatge", "prompt": "$text", "image": "$image"}';
     }
@@ -80,6 +82,7 @@ class AppData with ChangeNotifier {
       // Listen to each chunk of data
       response.stream.transform(utf8.decoder).listen(
         (data) {
+          print(loadingPost);
           if (loadingPost) {
             print(dataPost);
             // Update dataPost with the latest data
