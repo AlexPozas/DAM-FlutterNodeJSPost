@@ -17,7 +17,7 @@ class AppState extends State<App> {
     return const CDKApp(
         defaultAppearance: "system", // system, light, dark
         defaultColor: "systemBlue",
-        child: ChatGPTInterface(title: "App Desktop Title"));
+        child: LayoutChat());
   }
 
   // Definir el contingut del widget 'App'

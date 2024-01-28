@@ -1,10 +1,12 @@
 const express = require('express')
 const multer = require('multer');
 const url = require('url')
+
 const http = require('http');
-const bodyParser = require('body-parser');
+const { log } = require('console');
 const app = express()
 const port = process.env.PORT || 3000
+let stop = false;
 
 // Configurar la rebuda d'arxius a través de POST
 const storage = multer.memoryStorage(); // Guardarà l'arxiu a la memòria
@@ -46,28 +48,21 @@ async function getIeti(req, res) {
   // - etc.
 
   res.writeHead(200, { 'Content-Type': 'text/html' })
-  res.end('<html><head><meta charset="UTF-8"></head><body><b>El millor</b> institut del món!</body></html>')
+  res.end('<html><head><meta charset="UTF-8"></head><body><b>El pitjor</b> institut del món!</body></html>')
 }
 
-// Configurar direcció tipus 'GET' amb la URL ‘/llistat’ i paràmetres URL 
-// http://localhost:3000/llistat?cerca=cotxes&color=blau
-// http://localhost:3000/llistat?cerca=motos&color=vermell
+
 app.get('/llistat', getLlistat)
 async function getLlistat(req, res) {
   let query = url.parse(req.url, true).query;
 
-  // Aquí s'executen totes les accions necessaries
-  // però tenint en compte els valors dels variables de la URL
-  // que guardem a l'objecte 'query'
+
 
   if (query.cerca && query.color) {
     // Així es retorna un text per parts (chunks)
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=UTF-8' });
-    await new Promise(resolve => setTimeout(resolve, 1000))
     res.write(`result: "Aquí tens el llistat de ${query.cerca} de color ${query.color}"`)
-    await new Promise(resolve => setTimeout(resolve, 1000))
     res.write(`\n list: ["item0", "item1", "item2"]`)
-    await new Promise(resolve => setTimeout(resolve, 1000))
     res.end(`\n end: "Això és tot"`)
   } else {
     // Així es retorna un objecte JSON directament
@@ -76,41 +71,12 @@ async function getLlistat(req, res) {
 }
 
 
-
-
-app.post('/conversa', async (req, res) => {
-  // Obtener datos del cuerpo de la solicitud
-  const datos = req.body;
-
-  // Realizar operaciones con los datos y enviar una respuesta
-  res.json({ mensaje: 'Datos recibidos correctamente', datos });
-  // Ejecutar comando en la terminal (ejemplo: ls -l)
-
-  exec('', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error al ejecutar el comando: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`Error en la salida estándar: ${stderr}`);
-      return;
-    }
-    console.log(`Salida estándar del comando: ${stdout}`);
-  });
-});
-
-
-
-// Configurar direcció tipus 'POST' amb la URL ‘/data'
-// Enlloc de fer una crida des d'un navegador, fer servir 'curl'
-// curl -X POST -F "data={\"type\":\"test\"}" -F "file=@package.json" http://localhost:3000/data
 app.post('/data', upload.single('file'), async (req, res) => {
   // Processar les dades del formulari i l'arxiu adjunt
   const textPost = req.body;
   console.log(textPost);
   const uploadedFile = req.file;
   let objPost = {}
-  var stop = false;
 
   try {
     objPost = JSON.parse(textPost.data);
@@ -120,13 +86,7 @@ app.post('/data', upload.single('file'), async (req, res) => {
     return
   }
 
-  // Aquí s'executen totes les accions necessaries
-  // però tenint en compte el tipus de petició 
-  // (en aquest exemple només 'test')
 
-  // A l'exercici 'XatIETI' hi hauràn dos tipus de petició:
-  // - 'conversa' que retornara una petició generada per 'mistral'
-  // - 'imatge' que retornara una imatge generada per 'llava'
 
   if (objPost.type === 'test') {
     if (uploadedFile) {
@@ -141,8 +101,6 @@ app.post('/data', upload.single('file'), async (req, res) => {
     await new Promise(resolve => setTimeout(resolve, 1000))
     res.end("POST Last line\n")
   }
-
-
   else if (objPost.type === 'conversa') {
     callMistralApi(objPost.prompt, (chunk) => {
       if (chunk) {
@@ -197,7 +155,7 @@ app.post('/data', upload.single('file'), async (req, res) => {
 
     const req = http.request(options, res => {
       res.on('data', chunk => {
-        // Llamar al callback con cada fragmento de datos recibido
+
         onDataCallback(chunk);
       });
     });
@@ -244,7 +202,4 @@ app.post('/data', upload.single('file'), async (req, res) => {
     req.write(data);
     req.end();
   }
-}
-
-
-)
+})

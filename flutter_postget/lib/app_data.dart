@@ -16,31 +16,36 @@ class AppData with ChangeNotifier {
   bool loadingGet = false;
   bool loadingPost = false;
   bool loadingFile = false;
-  List<ChatMessage> _messages = <ChatMessage>[];
+
   dynamic dataGet;
   dynamic dataPost;
   dynamic dataFile;
 
+  String tempImg = "";
+  List<ChatMessage> messages = [];
+
   // Funció per fer crides tipus 'GET' i agafar la informació a mida que es va rebent
-  Future<void> loadHttpGetByChunks(String url) async {
+  Future<String> loadHttpGetByChunks(String url) async {
     var httpClient = HttpClient();
-    var completer = Completer<void>();
+    var completer = Completer<String>();
+    String result = "";
+
+    // If development, wait 1 second to simulate a delay
+    if (!kReleaseMode) {
+      await Future.delayed(const Duration(seconds: 1));
+    }
 
     try {
       var request = await httpClient.getUrl(Uri.parse(url));
       var response = await request.close();
 
-      dataGet = "";
-
-      // Listen to each chunk of data
       response.transform(utf8.decoder).listen(
         (data) {
           // Aquí rep cada un dels troços de dades que envia el servidor amb 'res.write'
-          dataGet += data;
-          notifyListeners();
+          result += data;
         },
         onDone: () {
-          completer.complete();
+          completer.complete(result);
         },
         onError: (error) {
           completer.completeError(
@@ -54,11 +59,9 @@ class AppData with ChangeNotifier {
     return completer.future;
   }
 
-  // Funció per fer crides tipus 'POST' amb un arxiu adjunt,
-  // i agafar la informació a mida que es va rebent
-  Future<String> loadHttpPostByChunks(
+  Future<void> loadHttpPostByChunks(
       String url, String text, String image) async {
-    var completer = Completer<String>();
+    var completer = Completer<void>();
     var request = http.MultipartRequest('POST', Uri.parse(url));
 
     // Agregar datos JSON como parte del formulario
@@ -74,22 +77,34 @@ class AppData with ChangeNotifier {
 
     try {
       var response = await request.send();
-      String dataPost = "";
+      print("inicio try");
+
+      if (loadingPost) dataPost = "";
 
       // Listen to each chunk of data
-      await for (String data in response.stream.transform(utf8.decoder)) {
-        dataPost += data;
-
-        if (loadingPost) {
-          notifyListeners(); // Notifica a los escuchadores cada vez que se actualiza dataPost
-        }
-      }
-
-      loadingPost = false;
-      completer
-          .complete(dataPost); // Retorna los datos al completar la solicitud
+      response.stream.transform(utf8.decoder).listen(
+        (data) {
+          if (loadingPost) {
+            print("inicio data");
+            print(dataPost);
+            // Update dataPost with the latest data
+            dataPost += data;
+            print("Despues data");
+            print(dataPost);
+            notifyListeners();
+          }
+        },
+        onDone: () {
+          print("onDone");
+          loadingPost = false;
+          completer.complete();
+        },
+        onError: (error) {
+          completer.completeError(
+              "Error del servidor (appData/loadHttpPostByChunks): $error");
+        },
+      );
     } catch (e) {
-      loadingPost = false;
       completer.completeError("Excepció (appData/loadHttpPostByChunks): $e");
     }
 
@@ -112,21 +127,23 @@ class AppData with ChangeNotifier {
     }
   }
 
-  // Carregar dades segons el tipus que es demana
-  void load(String type, {File? selectedFile}) async {
+  void load(String type, String selectedString, String image) async {
     switch (type) {
       case 'GET':
         loadingGet = true;
         notifyListeners();
-        await loadHttpGetByChunks(
+
+        dataGet = await loadHttpGetByChunks(
             'http://localhost:3000/llistat?cerca=motos&color=vermell');
+
         loadingGet = false;
         notifyListeners();
         break;
       case 'POST':
         loadingPost = true;
         notifyListeners();
-        //await loadHttpPostByChunks('http://localhost:3000/data', );
+        await loadHttpPostByChunks(
+            'http://localhost:3000/data', selectedString, image);
         loadingPost = false;
         notifyListeners();
         break;
@@ -140,17 +157,6 @@ class AppData with ChangeNotifier {
         dataFile = fileData;
         notifyListeners();
         break;
-    }
-  }
-
-  Future<String> readMessage(String text) async {
-    try {
-      String url = 'http://localhost:3000/data';
-      String image = '';
-      return loadHttpPostByChunks(url, text, image);
-    } catch (e) {
-      print('Error: $e');
-      throw e; // Puedes manejar el error según tus necesidades
     }
   }
 }
