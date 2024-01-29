@@ -217,13 +217,17 @@ class _LayoutChatState extends State<LayoutChat> {
                                     appData.load('POST', "", "");
                                   }
                                 },
-                                child: Icon(
-                                  appData.loadingPost
-                                      ? Icons.stop_circle_outlined
-                                      : Icons.send,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
+                                child: appData.loadingPost
+                                    ? Text(
+                                        "Stop",
+                                        style: TextStyle(
+                                            color: Colors.white, fontSize: 16),
+                                      )
+                                    : Text(
+                                        "Send",
+                                        style: TextStyle(
+                                            color: Colors.white, fontSize: 16),
+                                      ),
                               ),
                               const SizedBox(
                                 width: 8,
@@ -249,10 +253,10 @@ class _LayoutChatState extends State<LayoutChat> {
                                     }
                                   }
                                 },
-                                child: const Icon(
-                                  Icons.attach_file,
-                                  color: Colors.white,
-                                  size: 24,
+                                child: Text(
+                                  "Image",
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16),
                                 ),
                               ),
                               const SizedBox(

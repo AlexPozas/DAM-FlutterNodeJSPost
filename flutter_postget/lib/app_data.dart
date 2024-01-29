@@ -25,39 +25,6 @@ class AppData with ChangeNotifier {
   List<ChatMessage> messages = [];
 
   // Funció per fer crides tipus 'GET' i agafar la informació a mida que es va rebent
-  Future<String> loadHttpGetByChunks(String url) async {
-    var httpClient = HttpClient();
-    var completer = Completer<String>();
-    String result = "";
-
-    // If development, wait 1 second to simulate a delay
-    if (!kReleaseMode) {
-      await Future.delayed(const Duration(seconds: 1));
-    }
-
-    try {
-      var request = await httpClient.getUrl(Uri.parse(url));
-      var response = await request.close();
-
-      response.transform(utf8.decoder).listen(
-        (data) {
-          // Aquí rep cada un dels troços de dades que envia el servidor amb 'res.write'
-          result += data;
-        },
-        onDone: () {
-          completer.complete(result);
-        },
-        onError: (error) {
-          completer.completeError(
-              "Error del servidor (appData/loadHttpGetByChunks): $error");
-        },
-      );
-    } catch (e) {
-      completer.completeError("Excepció (appData/loadHttpGetByChunks): $e");
-    }
-
-    return completer.future;
-  }
 
   Future<void> loadHttpPostByChunks(
       String url, String text, String image) async {
@@ -77,7 +44,6 @@ class AppData with ChangeNotifier {
 
     try {
       var response = await request.send();
-      print("inicio try");
 
       if (loadingPost) dataPost = "";
 
@@ -85,17 +51,15 @@ class AppData with ChangeNotifier {
       response.stream.transform(utf8.decoder).listen(
         (data) {
           if (loadingPost) {
-            print("inicio data");
             print(dataPost);
             // Update dataPost with the latest data
             dataPost += data;
-            print("Despues data");
+
             print(dataPost);
             notifyListeners();
           }
         },
         onDone: () {
-          print("onDone");
           loadingPost = false;
           completer.complete();
         },
@@ -129,16 +93,6 @@ class AppData with ChangeNotifier {
 
   void load(String type, String selectedString, String image) async {
     switch (type) {
-      case 'GET':
-        loadingGet = true;
-        notifyListeners();
-
-        dataGet = await loadHttpGetByChunks(
-            'http://localhost:3000/llistat?cerca=motos&color=vermell');
-
-        loadingGet = false;
-        notifyListeners();
-        break;
       case 'POST':
         loadingPost = true;
         notifyListeners();
