@@ -221,12 +221,12 @@ class _LayoutChatState extends State<LayoutChat> {
                                     ? Text(
                                         "Stop",
                                         style: TextStyle(
-                                            color: Colors.white, fontSize: 16),
+                                            color: Colors.black, fontSize: 16),
                                       )
                                     : Text(
                                         "Send",
                                         style: TextStyle(
-                                            color: Colors.white, fontSize: 16),
+                                            color: Colors.black, fontSize: 16),
                                       ),
                               ),
                               const SizedBox(
@@ -256,7 +256,7 @@ class _LayoutChatState extends State<LayoutChat> {
                                 child: Text(
                                   "Image",
                                   style: TextStyle(
-                                      color: Colors.white, fontSize: 16),
+                                      color: Colors.black, fontSize: 16),
                                 ),
                               ),
                               const SizedBox(
